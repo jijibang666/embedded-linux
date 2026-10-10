@@ -116,13 +116,22 @@ check "已跟踪文件无未提交改动" '^clean$'                  <<< "$(if [
 check "有 origin 本地裸仓库"  '^origin$'                 <<< "$(git remote | grep -x origin || true)"
 check "有 github 远程"       '^github$'                 <<< "$(git remote | grep -x github || true)"
 check "origin 与本地 HEAD 一致" "^$(git rev-parse HEAD)$" <<< "$(git ls-remote origin refs/heads/main 2>/dev/null | cut -f1)"
+# GitHub 有两条通道：HTTPS（gh 凭据助手）和 SSH。任意一条通就算过。
+GH_HTTPS="$(timeout 30 env GIT_TERMINAL_PROMPT=0 git ls-remote github refs/heads/main 2>/dev/null | cut -f1)"
 SSH_OUT="$(timeout 25 ssh -o StrictHostKeyChecking=accept-new -T git@github.com 2>&1)"
-if printf '%s' "$SSH_OUT" | grep -q 'successfully authenticated'; then
-    check "GitHub SSH 认证"   'successfully authenticated' <<< "$SSH_OUT"
-    check "GitHub 远端 main"  '^[0-9a-f]{40}$'             <<< "$(timeout 25 git ls-remote github refs/heads/main 2>/dev/null | cut -f1)"
+if [ -n "$GH_HTTPS" ]; then
+    check "GitHub 认证（HTTPS + gh 凭据）" '^[0-9a-f]{40}$' <<< "$GH_HTTPS"
+elif printf '%s' "$SSH_OUT" | grep -q 'successfully authenticated'; then
+    check "GitHub 认证（SSH 公钥）" 'successfully authenticated' <<< "$SSH_OUT"
 else
-    skip "GitHub SSH 认证" "公钥还没加到 GitHub（唯一待办）"
-    skip "GitHub 远端 main" "同上"
+    skip "GitHub 认证" "HTTPS 与 SSH 都不通，先跑 bash ~/work/login-github.sh"
+fi
+if [ -n "$GH_HTTPS" ]; then
+    check "GitHub 远端 main 有内容"   '^[0-9a-f]{40}$'        <<< "$GH_HTTPS"
+    check "远端 main 与本地 HEAD 一致" "^$(git rev-parse HEAD)$" <<< "$GH_HTTPS"
+else
+    skip "GitHub 远端 main 有内容"   "远端还读不到"
+    skip "远端 main 与本地 HEAD 一致" "同上"
 fi
 
 # ---------------------------------------------------------------- 总结
@@ -130,7 +139,7 @@ printf '\n%s结论%s\n' "$BLD" "$RST"
 printf '  通过 %s%d%s / 失败 %s%d%s / 跳过 %s%d%s\n' "$GRN" "$PASS" "$RST" "$RED" "$FAIL" "$RST" "$YEL" "$SKIP" "$RST"
 if [ "$FAIL" -eq 0 ]; then
     printf '  %s环境全绿。%s' "$GRN" "$RST"
-    [ "$SKIP" -gt 0 ] && printf '跳过的 %d 项都跟「公钥还没贴」有关。\n' "$SKIP" || printf '\n'
+    [ "$SKIP" -gt 0 ] && printf '跳过的 %d 项见上面说明（多为需要联网或权限的检查）。\n' "$SKIP" || printf '\n'
 else
     printf '  %s有 %d 项没过，上面带 ✗ 的行就是原因。%s\n' "$RED" "$FAIL" "$RST"
 fi

@@ -81,9 +81,12 @@ CMake 项目光靠扩展自己猜头文件路径会漏，要在 `CMakeLists.txt`
 如果波浪线没出现，按顺序检查：① 扩展是不是装在 WSL 侧（`ls ~/.vscode-server/extensions/ | grep cpptools`）；
 ② `build/compile_commands.json` 在不在；③ `settings.json` 里有没有 `C_Cpp.default.compileCommands`。
 
-## 推送到 GitHub（SSH，不用 HTTPS）
+## 推送到 GitHub（HTTPS + gh 凭据）
 
-这台机器到 `github.com:443` 的 HTTPS 链路不稳定，所以走 SSH（配了 22 端口，不通会自动回退到 `ssh.github.com:443`）。
+用 `gh auth login` 走浏览器授权拿到 token 之后，git 的凭据由 gh 托管（存在 `~/.config/gh/hosts.yml`），**推送不用输密码**。
+
+> 为什么不用 SSH：本机 SSH 通道的 token 缺少 `admin:public_key` 权限，无法通过 API 注册公钥；
+> 而 HTTPS token 自带 `repo` 权限，直接就能推。SSH 通道仍然保留（`~/.ssh/config` 里配了 22→443 自动回退），需要时 `gh auth refresh -h github.com -s admin:public_key` 补权限即可。
 
 ```bash
 # 0. 确认公钥本身（如果没有就先 ssh-keygen -t ed25519 -C "你的邮箱"）
@@ -101,7 +104,7 @@ git push
 ```
 
 VS Code 里也配了对应的任务：`Ctrl+Shift+B` → 或者 `Ctrl+Shift+P` → `Tasks: Run Task` →
-- `7-推送到 GitHub（SSH）`
+- `7-推送到 GitHub（HTTPS，用 gh 凭据）`
 - `7b-测试 GitHub SSH 连接`
 - `7c-提交当前改动`
 
@@ -122,7 +125,7 @@ bash ~/work/post-login-setup.sh            # 注册公钥 + 配凭据助手 + �
 | 名称 | 地址 | 用途 |
 | --- | --- | --- |
 | `origin` | `~/work/remote/embedded-linux.git` | 本地裸仓库，断网也能推，当日常备份；`git push` 默认推这里 |
-| `github` | `git@github.com:aeroheaven1/embedded-linux.git` | 线上仓库，求职时给人看的那个 |
+| `github` | `git@github.com:jijibang666/embedded-linux.git` | 线上仓库，求职时给人看的那个 |
 
 ## 验收标准
 

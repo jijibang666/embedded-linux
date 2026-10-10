@@ -1,180 +1,345 @@
 {
-  // 在 VS Code 里按 Ctrl+Shift+B 就能看到这些任务。
-  // 也可以 Ctrl+Shift+P → "Tasks: Run Task" 手动挑一个。
-  // 用法：把要编译的文件在编辑器里打开，任务默认处理「当前打开的文件」；
-  //       如果要固定编某个文件，把 ${file} 改成具体文件名（例如 hello.c）。
   "version": "2.0.0",
   "tasks": [
-    // ============ 1. 原生编译（x86-64，最快，平时练 C 语言用这个）============
     {
       "label": "0-原生编译并运行（当前文件）",
       "type": "shell",
       "command": "gcc",
-      "args": ["-Wall", "-Wextra", "-g", "-O0", "${file}", "-o", "${fileDirname}/${fileBasenameNoExtension}"],
-      "options": { "cwd": "${fileDirname}" },
-      "group": { "kind": "build", "isDefault": true },
-      "problemMatcher": ["$gcc"],
-      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "args": [
+        "-Wall",
+        "-Wextra",
+        "-g",
+        "-O0",
+        "${file}",
+        "-o",
+        "${fileDirname}/${fileBasenameNoExtension}"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
       "detail": "用 gcc 编译当前打开的 .c 文件，生成到同目录（可执行文件与源文件同名去掉后缀）"
     },
     {
       "label": "0b-运行刚编译出的程序（当前文件）",
       "type": "shell",
       "command": "${fileDirname}/${fileBasenameNoExtension}",
-      "options": { "cwd": "${fileDirname}" },
+      "options": {
+        "cwd": "${fileDirname}"
+      },
       "dependsOn": "0-原生编译并运行（当前文件）",
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
       "detail": "先编再跑，一步到位"
     },
-
-    // ============ 2. 交叉编译 ARM（嵌入式主线，W01 就要用）============
     {
       "label": "1-交叉编译到 ARM（当前文件）",
       "type": "shell",
       "command": "arm-linux-gnueabihf-gcc",
-      "args": ["-Wall", "-g", "-O0", "-static", "${file}", "-o", "${fileDirname}/${fileBasenameNoExtension}_arm"],
-      "options": { "cwd": "${fileDirname}" },
+      "args": [
+        "-Wall",
+        "-g",
+        "-O0",
+        "-static",
+        "${file}",
+        "-o",
+        "${fileDirname}/${fileBasenameNoExtension}_arm"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
       "group": "build",
-      "problemMatcher": ["$gcc"],
-      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
       "detail": "静态链接的 ARM 可执行文件，命名加 _arm 后缀。-static 是为了能在 QEMU 里直接跑"
     },
     {
       "label": "2-用 QEMU 跑 ARM 程序（当前文件）",
       "type": "shell",
       "command": "qemu-arm",
-      "args": ["${fileDirname}/${fileBasenameNoExtension}_arm"],
-      "options": { "cwd": "${fileDirname}" },
+      "args": [
+        "${fileDirname}/${fileBasenameNoExtension}_arm"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
       "dependsOn": "1-交叉编译到 ARM（当前文件）",
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
       "detail": "先交叉编译，再用 qemu-arm 直接执行 ARM 二进制 —— 不需要开发板就能看到结果"
     },
     {
       "label": "3-查看 ARM 文件信息（file + readelf）",
       "type": "shell",
       "command": "bash",
-      "args": ["-c", "file ${fileDirname}/${fileBasenameNoExtension}_arm; echo '-------- 头 20 行 readelf --------'; arm-linux-gnueabihf-readelf -h ${fileDirname}/${fileBasenameNoExtension}_arm"],
-      "options": { "cwd": "${fileDirname}" },
+      "args": [
+        "-c",
+        "file ${fileDirname}/${fileBasenameNoExtension}_arm; echo '-------- 头 20 行 readelf --------'; arm-linux-gnueabihf-readelf -h ${fileDirname}/${fileBasenameNoExtension}_arm"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared" },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
       "detail": "验收用：确认输出是 ELF 32-bit LSB, ARM, EABI5"
     },
-
-    // ============ 3. Makefile 工程（W02 之后慢慢过渡到这种）============
     {
       "label": "4-make 编译当前目录",
       "type": "shell",
       "command": "make",
       "args": [],
-      "options": { "cwd": "${fileDirname}" },
+      "options": {
+        "cwd": "${fileDirname}"
+      },
       "group": "build",
-      "problemMatcher": ["$gcc"],
-      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
       "detail": "目录里有 Makefile 时用这个"
     },
     {
       "label": "4b-make 编译并运行",
       "type": "shell",
       "command": "bash",
-      "args": ["-c", "make && ./$(grep -m1 -E '^[A-Za-z_][A-Za-z0-9_-]*[[:space:]]*:' Makefile | cut -d: -f1)"],
-      "options": { "cwd": "${fileDirname}" },
+      "args": [
+        "-c",
+        "make && ./$(grep -m1 -E '^[A-Za-z_][A-Za-z0-9_-]*[[:space:]]*:' Makefile | cut -d: -f1)"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
       "detail": "简单粗暴：make 然后执行 Makefile 里第一个目标（通常是默认目标名）"
     },
     {
       "label": "4c-make clean",
       "type": "shell",
       "command": "make",
-      "args": ["clean"],
-      "options": { "cwd": "${fileDirname}" },
+      "args": [
+        "clean"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared" },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
       "detail": "清理编译产物"
     },
-
-    // ============ 4. CMake 工程（W03/W04 起）============
     {
       "label": "5-CMake 配置（当前目录 → build/）",
       "type": "shell",
       "command": "cmake",
-      "args": ["-S", "${fileDirname}", "-B", "${fileDirname}/build", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Debug"],
-      "options": { "cwd": "${fileDirname}" },
+      "args": [
+        "-S",
+        "${fileDirname}",
+        "-B",
+        "${fileDirname}/build",
+        "-G",
+        "Ninja",
+        "-DCMAKE_BUILD_TYPE=Debug"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
       "detail": "生成 Ninja 构建文件到 build/ 子目录"
     },
     {
       "label": "5b-CMake 编译（build/）",
       "type": "shell",
       "command": "cmake",
-      "args": ["--build", "${fileDirname}/build"],
-      "options": { "cwd": "${fileDirname}" },
+      "args": [
+        "--build",
+        "${fileDirname}/build"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
       "group": "build",
-      "problemMatcher": ["$gcc"],
+      "problemMatcher": [
+        "$gcc"
+      ],
       "dependsOn": "5-CMake 配置（当前目录 → build/）",
-      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
       "detail": "先配置再编译"
     },
-
-    // ============ 5. 推送到 GitHub（W01 的验收项之一）============
     {
-      "label": "7-推送到 GitHub（SSH）",
+      "label": "7-推送到 GitHub（HTTPS，用 gh 凭据）",
       "type": "shell",
       "command": "git",
-      "args": ["push", "git@github.com:aeroheaven1/embedded-linux.git", "HEAD:refs/heads/main"],
-      "options": { "cwd": "${workspaceFolder}" },
+      "args": [
+        "push",
+        "github",
+        "HEAD:refs/heads/main"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
-      "detail": "把当前分支推到 GitHub 上的 aeroheaven1/embedded-linux（仓库不存在会自动创建）。前置条件：SSH 公钥已加到 GitHub。"
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "detail": "把当前分支推到 https://github.com/jijibang666/embedded-linux。凭据由 gh auth login 存在 ~/.config/gh/hosts.yml，不用输密码。"
     },
     {
-      "label": "7b-测试 GitHub SSH 连接",
+      "label": "7b-测试 GitHub 推送通道（HTTPS）",
       "type": "shell",
-      "command": "ssh",
-      "args": ["-T", "git@github.com"],
-      "options": { "cwd": "${workspaceFolder}" },
+      "command": "git",
+      "args": [
+        "ls-remote",
+        "github"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
-      "detail": "出现 Hi aeroheaven1! You've successfully authenticated... 就说明公钥生效了（这条命令故意返回非 0 退出码，属正常）"
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "detail": "打印远端 main 的提交号就说明凭据有效。本机 SSH 通道的 admin:public_key 权限不足，因此走 HTTPS。"
     },
     {
       "label": "7c-提交当前改动",
       "type": "shell",
       "command": "bash",
-      "args": ["-c", "git add -A && git commit -m 'W01: 环境搭建与第一个程序' || echo '没有需要提交的改动'"],
-      "options": { "cwd": "${workspaceFolder}" },
+      "args": [
+        "-c",
+        "git add -A && git commit -m 'W01: 环境搭建与第一个程序' || echo '没有需要提交的改动'"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
       "detail": "把当前目录所有改动一次性提交（没有改动时会提示，不算失败）"
     },
-
-    // ============ 6. 自检：确认 IntelliSense 真的在工作 ============
     {
       "label": "8-自检 IntelliSense（故意报 3 个错）",
       "type": "shell",
       "command": "bash",
-      "args": ["-c", "rm -rf build && cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug >/dev/null 2>&1; echo '=== 1. 编译器报的错（预期的，故意留的）==='; gcc -fsyntax-only -Wall intellisense-check.c 2>&1 | head -12; echo; echo '=== 2. compile_commands.json 是否生成 ==='; ls -l build/compile_commands.json 2>/dev/null || echo '  ❌ 没生成，先跑任务 5-CMake 配置'; echo; echo '=== 3. cpptools 可执行文件类型（必须是 ELF） ==='; find ~/.vscode-server/extensions -name cpptools -type f -path '*/bin/*' 2>/dev/null | head -1 | xargs -r file; echo; echo '=== 4. 打开 intellisense-check.c 时编辑器里应出现的 3 处红色波浪线 ==='; grep -n 'undefined_function\\|not_declared\\|z = ' intellisense-check.c"],
-      "options": { "cwd": "${workspaceFolder}" },
+      "args": [
+        "-c",
+        "rm -rf build && cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug >/dev/null 2>&1; echo '=== 1. 编译器报的错（预期的，故意留的）==='; gcc -fsyntax-only -Wall intellisense-check.c 2>&1 | head -12; echo; echo '=== 2. compile_commands.json 是否生成 ==='; ls -l build/compile_commands.json 2>/dev/null || echo '  ❌ 没生成，先跑任务 5-CMake 配置'; echo; echo '=== 3. cpptools 可执行文件类型（必须是 ELF） ==='; find ~/.vscode-server/extensions -name cpptools -type f -path '*/bin/*' 2>/dev/null | head -1 | xargs -r file; echo; echo '=== 4. 打开 intellisense-check.c 时编辑器里应出现的 3 处红色波浪线 ==='; grep -n 'undefined_function\\|not_declared\\|z = ' intellisense-check.c"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
       "detail": "一次性确认：编译器确实报错 + compile_commands.json 在 + cpptools 是 Linux 二进制。若编辑器里也看到 3 处波浪线，说明 IntelliSense 真的在工作。"
     },
-
-    // ============ 7. ARM 调试用：QEMU 开 gdb 服务端 ============
     {
       "label": "6-QEMU 开 gdb 服务端（ARM，端口 1234）",
       "type": "shell",
       "command": "bash",
-      "args": ["-c", "echo '请在另一个终端里执行：'; echo; echo \"  gdb-multiarch ${fileDirname}/${fileBasenameNoExtension}_arm\"; echo '  (gdb) target remote localhost:1234'; echo '  (gdb) break main'; echo '  (gdb) continue'; echo; echo '现在启动 QEMU，按 Ctrl+C 结束：'; echo; exec qemu-arm -g 1234 ${fileDirname}/${fileBasenameNoExtension}_arm"],
-      "options": { "cwd": "${fileDirname}" },
+      "args": [
+        "-c",
+        "echo '请在另一个终端里执行：'; echo; echo \"  gdb-multiarch ${fileDirname}/${fileBasenameNoExtension}_arm\"; echo '  (gdb) target remote localhost:1234'; echo '  (gdb) break main'; echo '  (gdb) continue'; echo; echo '现在启动 QEMU，按 Ctrl+C 结束：'; echo; exec qemu-arm -g 1234 ${fileDirname}/${fileBasenameNoExtension}_arm"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
       "dependsOn": "1-交叉编译到 ARM（当前文件）",
       "problemMatcher": [],
       "isBackground": true,
-      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
       "detail": "QEMU 会在 1234 端口等 gdb 连上来再开始执行；配合 VS Code 的「调试 ARM 程序（QEMU + gdb）」用"
+    },
+    {
+      "label": "9-一键验收全部 38 项（w01-preflight.sh）",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "${workspaceFolder}/w01-preflight.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "detail": "38 项实测：WSL / 工具链 / 编译 / 调试 / VS Code / Git 与推送通道。全绿才算这一周过。"
+    },
+    {
+      "label": "10-看 GitHub 上的仓库",
+      "type": "shell",
+      "command": "gh",
+      "args": [
+        "repo",
+        "view",
+        "jijibang666/embedded-linux",
+        "--web"
+      ],
+      "problemMatcher": [],
+      "detail": "用浏览器打开 https://github.com/jijibang666/embedded-linux"
     }
   ]
 }

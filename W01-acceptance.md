@@ -75,18 +75,18 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKSOGgu3Z5BlgW/yI62ttN+mUsZRXol5yWdS4wG6zX8e
 1. 打开 <https://github.com/settings/ssh/new>
 2. Title 填 `WSL-Ubuntu-22.04`，Key type 保持 `Authentication Key`
 3. Key 里粘贴上面那一整行 → `Add SSH key`
-4. 回到 Ubuntu 终端验证：`ssh -T git@github.com`（应显示 `Hi aeroheaven1! You've successfully authenticated...`）
+4. 回到 Ubuntu 终端验证：`ssh -T git@github.com`（应显示 `Hi jijibang666! You've successfully authenticated...`）
 5. 推送：`cd ~/work/w01 && git push github HEAD:refs/heads/main`
 
 
 ## 6. GitHub 凭据排查（重要结论）
 
 这台机器的 Windows 凭据管理器里存着一个 GitHub 凭据（目标 `git:https://github.com`），
-账号是 **aeroheaven1**（id 295646756，7 个公开仓库）。但它**不能用来推送或建仓库**，实测证据：
+账号是 **jijibang666**（id 295646756，7 个公开仓库）。但它**不能用来推送或建仓库**，实测证据：
 
 | 探测 | 命令 | 结果 | 说明 |
 | --- | --- | --- | --- |
-| 能读账号信息 | `GET /user`（经 gh-proxy） | 200，返回 `aeroheaven1` | token 本身有效 |
+| 能读账号信息 | `GET /user`（经 gh-proxy） | 200，返回 `jijibang666` | token 本身有效 |
 | 看仓库列表 | `GET /user/repos` | 返回 0 个仓库 | 这个 token 看不到任何仓库 |
 | 建仓库 | `POST /user/repos` | **403** `Resource not accessible by personal access token` | 无建仓权限 |
 | 管公钥 | `GET /user/keys` | `Resource not accessible` | 无 SSH 公钥管理权限 |
