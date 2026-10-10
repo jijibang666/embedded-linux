@@ -96,4 +96,4 @@ VS Code 里也配了对应的任务：`Ctrl+Shift+B` → 或者 `Ctrl+Shift+P` �
 - [x] VS Code 连上 WSL，C/C++ 扩展在 Linux 侧可运行（`cpptools --version` → 1.35.3.0）
 - [ ] 代码推到 GitHub，能看到仓库页面
 
-详细验收记录见 `W01验收.md`。
+详细验收记录见 `W01-acceptance.md`。
