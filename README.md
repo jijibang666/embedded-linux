@@ -23,7 +23,7 @@
 | `Makefile` | `make` / `make run` / `make arm` / `make qemu` / `make arm-all` / `make clean` |
 | `CMakeLists.txt` | CMake 工程定义，`CMAKE_EXPORT_COMPILE_COMMANDS=ON` 供 IntelliSense 用 |
 | `intellisense-check.c` | 故意留了 3 个错，用来肉眼确认扩展是不是真在工作 |
-| `w01-preflight.sh` | 一键自检 38 项（环境 / 工具链 / 编译 / 调试 / VS Code / 推送通道），全绿才算这周过 |
+| `w01-preflight.sh` | 一键自检 41 项（环境 / 工具链 / 编译 / 调试 / VS Code / 推送通道），全绿才算这周过 |
 | `W01-acceptance.md` | 逐项验收记录，含 GitHub 凭据排查的完整证据 |
 | `.vscode/` | 编辑器配置：构建任务、gdb 调试、C/C++ 设置、推荐扩展 |
 
