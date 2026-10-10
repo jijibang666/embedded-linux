@@ -1,103 +1,99 @@
-# W01 · 环境搭建与第一次接触
+# W01 — 环境搭建与第一个程序
 
-**阶段**：①基础　**周期**：2026-10-12 ~ 2026-10-18　**预计工时**：10 小时
+嵌入式 Linux 求职路线的第 1 周。目标不是"学到什么新知识"，而是**把一台能持续用 24 周的机器搭出来**，并且证明这条流水线从头到尾是通的。
 
-这个仓库是我 24 周嵌入式 Linux 路线的起点，用来做 W01 的交付验收：
-WSL2 + Ubuntu 22.04 环境、VS Code Remote-WSL、以及第一个能编译、能跑、
-能交叉编译到 ARM 的程序。
+## 一周成果
 
-## 这周做完的事
+- Windows 11 + WSL2（Ubuntu 22.04.5 LTS，内核 6.18.40.1-microsoft-standard-WSL2），导入的发行版名为 `Ubuntu-22.04`
+- Linux 用户 `yingying`（uid 1000，sudo 免密），代码一律放 Linux 侧的 `~/work`，不放 `/mnt/c`
+- apt 源换成上海交大镜像（`mirror.sjtu.edu.cn`）
+- 工具链：gcc/g++ 11.4.0、make 4.3、cmake 3.22.1、ninja 1.10.1、git 2.34.1、gdb 12.1、
+  dtc 1.6.1、qemu-system-arm 6.2.0、arm-linux-gnueabihf-gcc 11.4.0、minicom 2.8、sigrok-cli 0.7.2、strace、valgrind
+- VS Code 通过 WSL 远程连接（`code` 已在 WSL 里可用），IntelliSense / 构建任务 / gdb 调试配置全部就绪
 
-- [x] 启用 WSL2 与虚拟机平台（管理员 + 重启）
-- [x] 用国内镜像导入 Ubuntu 22.04（绕过微软商店，325.3 MB 约 1 分钟）
-- [x] apt 换上海交大源，装齐 GCC/CMake/Ninja/GDB/QEMU/dtc 等工具链
-- [x] VS Code + Remote-WSL 连上 `~/work`
-- [x] 配置 11 个任务与 2 个调试配置（Ctrl+Shift+B / F5 直接用）
-- [x] 第一个程序：原生编译 + 交叉编译到 ARM + QEMU 里跑起来
+## 目录内容
 
-## 验收命令
+| 文件 | 干什么的 |
+| --- | --- |
+| `hello.c` | 第一个程序，原生和 ARM 两个目标都编它 |
+| `Makefile` | `make` / `make run` / `make arm` / `make qemu` / `make arm-all` / `make clean` |
+| `CMakeLists.txt` | CMake 工程定义，`CMAKE_EXPORT_COMPILE_COMMANDS=ON` 供 IntelliSense 用 |
+| `intellisense-check.c` | 故意留了 3 个错，用来肉眼确认扩展是不是真在工作 |
+| `.vscode/` | 编辑器配置：构建任务、gdb 调试、C/C++ 设置、推荐扩展 |
+
+## 常用命令
 
 ```bash
-# 1. 原生编译并运行
-gcc -Wall -Wextra -g -O0 hello.c -o hello && ./hello
-# 期望输出：hello, embedded linux
+# 原生编译运行（x86-64，日常练 C 用这个）
+make && ./hello
 
-# 2. 交叉编译到 ARM（32 位）
-arm-linux-gnueabihf-gcc -Wall -g -O0 -static hello.c -o hello_arm
+# 交叉编译到 ARM 并用 QEMU 跑（不需要开发板）
+make arm && qemu-arm ./hello_arm
+
+# CMake + Ninja 构建（并生成 compile_commands.json 喂给 IntelliSense）
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+cmake --build build && ./build/hello
+
+# 看文件类型，确认交叉编译真的产出了 ARM 二进制
 file hello_arm
-# 期望：ELF 32-bit LSB executable, ARM, EABI5 ... statically linked
-
-# 3. 用 QEMU 模拟 ARM CPU 跑它
-qemu-arm ./hello_arm
-# 期望输出：hello, embedded linux
+arm-linux-gnueabihf-readelf -h hello_arm
 ```
 
-## 本周的关键收获（写给自己，也是面试素材）
+## 踩坑记录（这些坑以后还会遇到，先记下来）
 
-**为什么要 `-static`**：宿主机上没有 ARM 版的 libc 动态库，静态链接把 libc
-打进可执行文件，QEMU 里才能直接跑。等以后有开发板，这一步换成动态链接 +
-把库拷进 rootfs。
+### 坑 1：VS Code 的扩展是按平台分包的
 
-**为什么要 `-g -O0`**：`-g` 才有调试信息（否则断点只能设在汇编上、看不到
-变量名）；`-O0` 关优化，否则变量会被优化掉、单步会跳行，学习阶段极易困惑。
+微软市场里 `ms-vscode.cpptools` 有 9 个按平台拆开的包（`win32-x64`、`linux-x64`、`darwin-x64`、`linux-arm64`……）。如果按普通方式下载，拿到的可能是给 macOS 用的 `darwin-x64` 包，装到 Linux 上执行 `bin/cpptools` 会直接 `Permission denied`。
 
-**交叉编译的意义**：x86 电脑上写代码 → 编译成 ARM 指令 → QEMU 模拟 ARM
-CPU 执行。这跟「烧进开发板」是同一套流程，只是执行环境不同。
+判别方法：`file ~/.vscode-server/extensions/ms-vscode.cpptools-*/bin/cpptools` —— 必须是 `ELF 64-bit LSB executable`，如果是 `Mach-O 64-bit x86_64` 那就是拿错包了。
 
-**踩坑：VS Code 扩展是按平台分包的**
-装 C/C++ 扩展时遇到一个很典型的坑——微软市场里的 `ms-vscode.cpptools`
-**按平台分成了 9 个包**（win32-x64 / linux-x64 / darwin-x64 / linux-arm64 …）。
-如果按「通用」去拉，很可能拿到的是 macOS 的包，里头的 `cpptools` 是 Mach-O
-格式，在 Linux 上直接 `Permission denied`。
+### 坑 2：CMake 项目的 IntelliSense 要喂 compile_commands.json
 
-判别方法：`file` 一下 `~/.vscode-server/extensions/ms-vscode.cpptools-*/bin/cpptools`，
-必须是 `ELF 64-bit LSB executable, x86-64` 才对。
-拿到正确平台包的办法：查市场的 extensionquery 接口，带 `flags:2151`
-把 `targetPlatform` 列出来，取 `linux-x64` 那个下载地址。
+CMake 项目光靠扩展自己猜头文件路径会漏，要在 `CMakeLists.txt` 里打开 `set(CMAKE_EXPORT_COMPILE_COMMANDS ON)`，再在 `settings.json` 里加 `"C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json"`，写完记得先跑一次 CMake 配置。
 
-**踩坑：CMake 项目的 IntelliSense 要喂 compile_commands.json**
-命令行编译得过、编辑器却报红，通常是因为 cpptools 不知道真实的头文件路径和
-宏定义。在 `CMakeLists.txt` 里加一句 `set(CMAKE_EXPORT_COMPILE_COMMANDS ON)`，
-配置一次就会生成 `build/compile_commands.json`，`.vscode/settings.json` 里的
-`C_Cpp.default.compileCommands` 指过去，报错就和真实编译一致了。
+### 坑 3：cpptools 的二进制用相对路径指定解释器
 
-## 环境备忘
-
-| 项目 | 值 |
-|---|---|
-| 发行版 | Ubuntu 22.04.5 LTS（WSL2） |
-| 内核 | 6.18.40.1-microsoft-standard-WSL2 |
-| 用户 | yingying (uid 1000, sudo 免密) |
-| 工作目录 | `~/work`（**不要**放 `/mnt/c`） |
-| apt 源 | mirror.sjtu.edu.cn |
-| 交叉工具链 | arm-linux-gnueabihf-gcc 11.4.0 |
-| 调试器 | gdb 12.1（原生）/ gdb-multiarch 12.1（ARM） |
-| 模拟器 | qemu-arm / qemu-system-arm 6.2.0 |
-
-从 Windows 侧访问本目录：`\\wsl.localhost\Ubuntu-22.04\home\yingying\work`
+`bin/cpptools` 的 ELF 解释器是 `./libc.so`（相对路径），所以必须在 `bin/` 目录里、或者用相对路径调用它；从别的目录用绝对路径直接跑会报 `No such file or directory`。这是正常现象，不是装坏了。
 
 ## 推送到 GitHub（SSH，不用 HTTPS）
 
-这台机器到 `github.com` 的 **HTTPS 443 被阻断**（curl 超时），但 **SSH 可用**，
-所以走 SSH。`~/.ssh/config` 里配了两条通道，22 不通会自动回退到 443。
+这台机器到 `github.com:443` 的 HTTPS 链路不稳定，所以走 SSH（配了 22 端口，不通会自动回退到 `ssh.github.com:443`）。
 
 ```bash
-# 1) 把公钥加到 GitHub → Settings → SSH and GPG keys → New SSH key
+# 0. 确认公钥本身（如果没有就先 ssh-keygen -t ed25519 -C "你的邮箱"）
 cat ~/.ssh/id_ed25519.pub
+# 把这一整行粘到 https://github.com/settings/ssh/new
 
-# 2) 验证连通（看到 successfully authenticated 且 Hi <用户名>! 就成了）
+# 1. 验证身份，看到 "Hi <用户名>! You've successfully authenticated" 就对了
 ssh -T git@github.com
 
-# 3) 关联远程仓库并推送
-git remote add origin git@github.com:<你的用户名>/embedded-linux.git
-git push -u origin main
-```
+# 2. 推（首次推送会自动创建仓库）
+git push github HEAD:refs/heads/main
 
-以后每天写代码的节奏就是：
-
-```bash
-git add .
-git commit -m "W02: 完成 xx"
+# 3. 以后日常推送
 git push
 ```
 
+VS Code 里也配了对应的任务：`Ctrl+Shift+B` → 或者 `Ctrl+Shift+P` → `Tasks: Run Task` →
+- `7-推送到 GitHub（SSH）`
+- `7b-测试 GitHub SSH 连接`
+- `7c-提交当前改动`
+
+### 远程仓库是双轨的
+
+| 名称 | 地址 | 用途 |
+| --- | --- | --- |
+| `origin` | `~/work/remote/embedded-linux.git` | 本地裸仓库，断网也能推，当日常备份；`git push` 默认推这里 |
+| `github` | `git@github.com:aeroheaven1/embedded-linux.git` | 线上仓库，求职时给人看的那个 |
+
+## 验收标准
+
+- [x] `wsl -l -v` 显示发行版处于 Running、版本 2
+- [x] 原生编译运行成功，输出 `hello, embedded linux`
+- [x] 交叉编译产出 ARM 二进制，`file` 显示 `ELF 32-bit LSB executable, ARM, EABI5 ... statically linked`
+- [x] QEMU 里跑通 ARM 程序，输出同样内容（不依赖开发板）
+- [x] CMake + Ninja 能构建，并生成 `compile_commands.json`
+- [x] VS Code 连上 WSL，C/C++ 扩展在 Linux 侧可运行（`cpptools --version` → 1.35.3.0）
+- [ ] 代码推到 GitHub，能看到仓库页面
+
+详细验收记录见 `W01验收.md`。
