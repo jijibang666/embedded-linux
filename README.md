@@ -2,6 +2,10 @@
 
 嵌入式 Linux 求职路线的第 1 周。目标不是"学到什么新知识"，而是**把一台能持续用 24 周的机器搭出来**，并且证明这条流水线从头到尾是通的。
 
+> **一句话验收：** `bash w01-preflight.sh` —— 38 项实测，全绿才算这一周过。
+>
+> 不确定下一步做什么就跑 `~/work/progress.sh`；想知道 W02/W03 的环境在哪，看 `~/work/embedded-linux/README.md`。
+
 ## 一周成果
 
 - Windows 11 + WSL2（Ubuntu 22.04.5 LTS，内核 6.18.40.1-microsoft-standard-WSL2），导入的发行版名为 `Ubuntu-22.04`
@@ -19,6 +23,8 @@
 | `Makefile` | `make` / `make run` / `make arm` / `make qemu` / `make arm-all` / `make clean` |
 | `CMakeLists.txt` | CMake 工程定义，`CMAKE_EXPORT_COMPILE_COMMANDS=ON` 供 IntelliSense 用 |
 | `intellisense-check.c` | 故意留了 3 个错，用来肉眼确认扩展是不是真在工作 |
+| `w01-preflight.sh` | 一键自检 38 项（环境 / 工具链 / 编译 / 调试 / VS Code / 推送通道），全绿才算这周过 |
+| `W01-acceptance.md` | 逐项验收记录，含 GitHub 凭据排查的完整证据 |
 | `.vscode/` | 编辑器配置：构建任务、gdb 调试、C/C++ 设置、推荐扩展 |
 
 ## 常用命令
@@ -98,6 +104,18 @@ VS Code 里也配了对应的任务：`Ctrl+Shift+B` → 或者 `Ctrl+Shift+P` �
 - `7-推送到 GitHub（SSH）`
 - `7b-测试 GitHub SSH 连接`
 - `7c-提交当前改动`
+
+### 更省事的另一条路：用 GitHub CLI 网页授权
+
+如果懒得手抄那 80 个字符的公钥，也可以让 `gh` 走浏览器授权（授权后它能直接替你注册公钥）：
+
+```bash
+sudo apt-get install -y gh                 # 交大镜像，约 8 秒
+gh auth login --hostname github.com --web  # 复制一次性代码 → 浏览器里输入 → 点 Authorize
+bash ~/work/post-login-setup.sh            # 注册公钥 + 配凭据助手 + 推送 + 核对远端 HEAD
+```
+
+`gh` 登录成功后，后续 HTTPS 推送也不用再输密码（凭据存在 `~/.config/gh/hosts.yml`）。
 
 ### 远程仓库是双轨的
 
