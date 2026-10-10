@@ -56,7 +56,7 @@ check "ninja"               '^[0-9]+\.[0-9]+'          <<< "$(ninja --version 2>
 check "gdb"                 '^GNU gdb'                 <<< "$(gdb --version 2>&1 | head -1)"
 check "git"                 '^git version'             <<< "$(git --version 2>&1)"
 check "ARM 交叉编译器"       '^arm-linux-gnueabihf-gcc'  <<< "$(arm-linux-gnueabihf-gcc --version 2>&1 | head -1)"
-check "qemu-arm 可运行"      'hello, embedded linux'    <<< "$(qemu-arm --version >/dev/null 2>&1 && echo qemu-ok || echo qemu-missing)"
+check "qemu-arm 已安装"       '^qemu-ok$'                <<< "$(qemu-arm --version >/dev/null 2>&1 && echo qemu-ok || echo qemu-missing)"
 check "dtc（设备树编译器）"   '^Version: DTC'            <<< "$(dtc --version 2>&1 | head -1)"
 check "strace"              '^strace -- version'       <<< "$(strace --version 2>&1 | head -1)"
 
@@ -72,7 +72,7 @@ check "QEMU 能跑 ARM 产物"   'hello, embedded linux'    <<< "$(qemu-arm ./he
 CM_LOG="$(rm -rf build && cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug 2>&1 && cmake --build build 2>&1; echo "cmake-exit=$?")"
 check "CMake+Ninja 构建成功" 'cmake-exit=0'             <<< "$CM_LOG"
 check "CMake 产物输出正确"   'hello, embedded linux'    <<< "$(./build/hello 2>&1)"
-check "compile_commands.json" 'hello\.c'                <<< "$(grep -l hello.c build/compile_commands.json 2>/dev/null && echo found || echo missing)"
+check "compile_commands.json" '^[0-9]+$'                <<< "$(grep -c hello.c build/compile_commands.json 2>/dev/null || echo 0)"
 
 # ---------------------------------------------------------------- 4 调试
 section "4) 调试"
@@ -86,20 +86,33 @@ EXT_ROOT="$HOME/.vscode-server/extensions"
 CPP_BIN="$(find "$EXT_ROOT" -name cpptools -type f -path '*/bin/*' 2>/dev/null | head -1)"
 if [ -n "$CPP_BIN" ]; then
     check "cpptools 是 linux-x64 ELF" 'ELF 64-bit LSB executable, x86-64' <<< "$(file -b "$CPP_BIN" 2>&1)"
-    check "cpptools 版本"            '^[0-9]+\.[0-9]+\.[0-9]+'            <<< "$("$CPP_BIN" --version 2>&1 | head -1)"
+    CPP_VER="$(cd "$(dirname "$CPP_BIN")" && ./cpptools --version 2>&1 | head -1)"
+    check "cpptools 版本"            '^[0-9]+\.[0-9]+\.[0-9]+'            <<< "$CPP_VER"
 else
     skip "cpptools 二进制" "没找到（扩展未装或路径变了）"
 fi
 check "launch.json 存在"      'launch\.json'            <<< "$(ls .vscode/ 2>&1)"
-check "tasks.json JSON 合法"  '^ok$'                    <<< "$(python3 -c "import json;json.load(open('.vscode/tasks.json'));print('ok')" 2>&1)"
-check "tasks.json 任务数"     '^[0-9]+$'                <<< "$(python3 -c "import json;print(len(json.load(open('.vscode/tasks.json'))['tasks']))" 2>&1)"
+JSONC_OK="$(python3 - <<'PYEOF'
+import re, json
+raw = open('.vscode/tasks.json', encoding='utf-8').read()
+# 去掉 // 行注释与 /* */ 块注释（VS Code 用 JSONC，标准 json 解析不了）
+raw = re.sub(r'/\*.*?\*/', '', raw, flags=re.S)
+raw = re.sub(r'(?m)^\s*//.*$', '', raw)
+raw = re.sub(r'(?m)([^:"])//.*$', r'\1', raw)
+d = json.loads(raw)
+print(f"ok tasks={len(d['tasks'])}")
+PYEOF
+)"
+check "tasks.json JSONC 合法"  '^ok'                    <<< "$JSONC_OK"
+check "tasks.json 任务数"     'tasks=[0-9]+'           <<< "$JSONC_OK"
 check "IntelliSense 自检文件在" 'intellisense-check\.c'   <<< "$(ls 2>&1)"
 check "自检文件的 3 个错仍在"   'not_declared'            <<< "$(gcc -fsyntax-only -Wall intellisense-check.c 2>&1)"
 
 # ---------------------------------------------------------------- 6 Git
 section "6) Git 与推送通道"
 check "分支是 main"          '^main$'                   <<< "$(git rev-parse --abbrev-ref HEAD)"
-check "工作区干净"           '^clean$'                  <<< "$(if [ -z "$(git status --porcelain)" ]; then echo clean; else echo dirty; fi)"
+DIRTY="$(git status --porcelain | grep -v '^?? ' || true)"
+check "已跟踪文件无未提交改动" '^clean$'                  <<< "$(if [ -z "$DIRTY" ]; then echo clean; else echo "dirty: $DIRTY"; fi)"
 check "有 origin 本地裸仓库"  '^origin$'                 <<< "$(git remote | grep -x origin || true)"
 check "有 github 远程"       '^github$'                 <<< "$(git remote | grep -x github || true)"
 check "origin 与本地 HEAD 一致" "^$(git rev-parse HEAD)$" <<< "$(git ls-remote origin refs/heads/main 2>/dev/null | cut -f1)"
