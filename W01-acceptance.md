@@ -49,15 +49,15 @@
 | 调试配置 | `.vscode/launch.json` 两条：原生 gdb、ARM（QEMU + gdb） | ✅ |
 | IntelliSense 自检 | `intellisense-check.c` 里故意留的 3 个错（第 17/18/20 行）被编译器和扩展同时识别 | ✅ |
 | 原生 gdb 调试 | `gdb -batch -ex "break main" -ex run -ex "print sizeof(int)" ./build/hello` → 断在 hello.c:4，`$1 = 4` | ✅ |
-| 构建任务 | `.vscode/tasks.json` 共 14 个任务，JSON 校验通过 | ✅ |
+| 构建任务 | `.vscode/tasks.json` 共 15 个任务，JSON 校验通过 | ✅ |
 
 ## 5. Git
 
 | 检查项 | 实测结果 | 结论 |
 | --- | --- | --- |
 | 仓库初始化 | `~/work/w01`，分支 `main` | ✅ |
-| 提交 | 4 次提交，工作区干净 | ✅ |
-| 本地裸仓库推送 | push 成功，远端 HEAD == 本地 HEAD（`ead53dd`） | ✅ |
+| 提交 | 7 次提交，工作区干净 | ✅ |
+| 本地裸仓库推送 | push 成功，远端 HEAD == 本地 HEAD（`4b461bc`） | ✅ |
 | 端到端 | 从裸仓库 clone 回来 → `make` → 输出正确 | ✅ |
 | 推送 GitHub | **待完成**：SSH 公钥还没有加到 GitHub 账号 | ⬜ |
 
