@@ -41,6 +41,10 @@
   ],
   "C_Cpp.errorSquiggles": "enabled",
   "C_Cpp.intelliSenseEngine": "default",
+  // 如果项目是用 CMake 管的，build/compile_commands.json 里有最精确的编译参数，
+  // cpptools 会优先用它，能消掉「命令行编得过、编辑器却报红」的假错误。
+  // 没这个文件也不会出错（只是一直提示找不到），跑一次 cmake 配置就有了。
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
   // 交叉编译时切换 IntelliSense 到 ARM 头文件（需要时把上一行 compilerPath 改成
   // arm-linux-gnueabihf-gcc，并把下面这行打开）
   // "C_Cpp.default.compilerPath": "/usr/bin/arm-linux-gnueabihf-gcc",

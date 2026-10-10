@@ -44,6 +44,23 @@ qemu-arm ./hello_arm
 **交叉编译的意义**：x86 电脑上写代码 → 编译成 ARM 指令 → QEMU 模拟 ARM
 CPU 执行。这跟「烧进开发板」是同一套流程，只是执行环境不同。
 
+**踩坑：VS Code 扩展是按平台分包的**
+装 C/C++ 扩展时遇到一个很典型的坑——微软市场里的 `ms-vscode.cpptools`
+**按平台分成了 9 个包**（win32-x64 / linux-x64 / darwin-x64 / linux-arm64 …）。
+如果按「通用」去拉，很可能拿到的是 macOS 的包，里头的 `cpptools` 是 Mach-O
+格式，在 Linux 上直接 `Permission denied`。
+
+判别方法：`file` 一下 `~/.vscode-server/extensions/ms-vscode.cpptools-*/bin/cpptools`，
+必须是 `ELF 64-bit LSB executable, x86-64` 才对。
+拿到正确平台包的办法：查市场的 extensionquery 接口，带 `flags:2151`
+把 `targetPlatform` 列出来，取 `linux-x64` 那个下载地址。
+
+**踩坑：CMake 项目的 IntelliSense 要喂 compile_commands.json**
+命令行编译得过、编辑器却报红，通常是因为 cpptools 不知道真实的头文件路径和
+宏定义。在 `CMakeLists.txt` 里加一句 `set(CMAKE_EXPORT_COMPILE_COMMANDS ON)`，
+配置一次就会生成 `build/compile_commands.json`，`.vscode/settings.json` 里的
+`C_Cpp.default.compileCommands` 指过去，报错就和真实编译一致了。
+
 ## 环境备忘
 
 | 项目 | 值 |
@@ -58,3 +75,29 @@ CPU 执行。这跟「烧进开发板」是同一套流程，只是执行环境�
 | 模拟器 | qemu-arm / qemu-system-arm 6.2.0 |
 
 从 Windows 侧访问本目录：`\\wsl.localhost\Ubuntu-22.04\home\yingying\work`
+
+## 推送到 GitHub（SSH，不用 HTTPS）
+
+这台机器到 `github.com` 的 **HTTPS 443 被阻断**（curl 超时），但 **SSH 可用**，
+所以走 SSH。`~/.ssh/config` 里配了两条通道，22 不通会自动回退到 443。
+
+```bash
+# 1) 把公钥加到 GitHub → Settings → SSH and GPG keys → New SSH key
+cat ~/.ssh/id_ed25519.pub
+
+# 2) 验证连通（看到 successfully authenticated 且 Hi <用户名>! 就成了）
+ssh -T git@github.com
+
+# 3) 关联远程仓库并推送
+git remote add origin git@github.com:<你的用户名>/embedded-linux.git
+git push -u origin main
+```
+
+以后每天写代码的节奏就是：
+
+```bash
+git add .
+git commit -m "W02: 完成 xx"
+git push
+```
+
