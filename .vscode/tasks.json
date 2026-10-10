@@ -151,7 +151,19 @@
       "detail": "把当前目录所有改动一次性提交（没有改动时会提示，不算失败）"
     },
 
-    // ============ 6. ARM 调试用：QEMU 开 gdb 服务端 ============
+    // ============ 6. 自检：确认 IntelliSense 真的在工作 ============
+    {
+      "label": "8-自检 IntelliSense（故意报 3 个错）",
+      "type": "shell",
+      "command": "bash",
+      "args": ["-c", "rm -rf build && cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug >/dev/null 2>&1; echo '=== 1. 编译器报的错（预期的，故意留的）==='; gcc -fsyntax-only -Wall intellisense-check.c 2>&1 | head -12; echo; echo '=== 2. compile_commands.json 是否生成 ==='; ls -l build/compile_commands.json 2>/dev/null || echo '  ❌ 没生成，先跑任务 5-CMake 配置'; echo; echo '=== 3. cpptools 可执行文件类型（必须是 ELF） ==='; find ~/.vscode-server/extensions -name cpptools -type f -path '*/bin/*' 2>/dev/null | head -1 | xargs -r file; echo; echo '=== 4. 打开 intellisense-check.c 时编辑器里应出现的 3 处红色波浪线 ==='; grep -n 'undefined_function\\|not_declared\\|z = ' intellisense-check.c"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "detail": "一次性确认：编译器确实报错 + compile_commands.json 在 + cpptools 是 Linux 二进制。若编辑器里也看到 3 处波浪线，说明 IntelliSense 真的在工作。"
+    },
+
+    // ============ 7. ARM 调试用：QEMU 开 gdb 服务端 ============
     {
       "label": "6-QEMU 开 gdb 服务端（ARM，端口 1234）",
       "type": "shell",

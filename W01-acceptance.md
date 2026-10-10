@@ -47,6 +47,8 @@
 | `code` 命令在 WSL 里可用 | `type code` → function（`~/.bashrc` 里的 shim） | ✅ |
 | C/C++ 扩展在 Linux 侧 | `bin/cpptools --version` → `1.35.3.0`，`file` 显示 ELF x86-64 | ✅ |
 | 调试配置 | `.vscode/launch.json` 两条：原生 gdb、ARM（QEMU + gdb） | ✅ |
+| IntelliSense 自检 | `intellisense-check.c` 里故意留的 3 个错（第 17/18/20 行）被编译器和扩展同时识别 | ✅ |
+| 原生 gdb 调试 | `gdb -batch -ex "break main" -ex run -ex "print sizeof(int)" ./build/hello` → 断在 hello.c:4，`$1 = 4` | ✅ |
 | 构建任务 | `.vscode/tasks.json` 共 14 个任务，JSON 校验通过 | ✅ |
 
 ## 5. Git
@@ -75,6 +77,39 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKSOGgu3Z5BlgW/yI62ttN+mUsZRXol5yWdS4wG6zX8e
 3. Key 里粘贴上面那一整行 → `Add SSH key`
 4. 回到 Ubuntu 终端验证：`ssh -T git@github.com`（应显示 `Hi aeroheaven1! You've successfully authenticated...`）
 5. 推送：`cd ~/work/w01 && git push github HEAD:refs/heads/main`
+
+
+## 6. GitHub 凭据排查（重要结论）
+
+这台机器的 Windows 凭据管理器里存着一个 GitHub 凭据（目标 `git:https://github.com`），
+账号是 **aeroheaven1**（id 295646756，7 个公开仓库）。但它**不能用来推送或建仓库**，实测证据：
+
+| 探测 | 命令 | 结果 | 说明 |
+| --- | --- | --- | --- |
+| 能读账号信息 | `GET /user`（经 gh-proxy） | 200，返回 `aeroheaven1` | token 本身有效 |
+| 看仓库列表 | `GET /user/repos` | 返回 0 个仓库 | 这个 token 看不到任何仓库 |
+| 建仓库 | `POST /user/repos` | **403** `Resource not accessible by personal access token` | 无建仓权限 |
+| 管公钥 | `GET /user/keys` | `Resource not accessible` | 无 SSH 公钥管理权限 |
+| git 推送 | `git push --dry-run` 到已有仓库 | `remote: No anonymous write access` + `Authentication failed` | 推不上去 |
+| 对照组 | 换成随便编的假 token | **一模一样的报错** | 说明 gh-proxy 不转发推送认证 |
+
+结论：**这台机器上现存的凭据只能读公开数据，写操作一条都不行**，必须另找身份。
+
+### 备用通道：gh-proxy.com（只读可用）
+
+实测 `gh-proxy.com` 能给 git 做 HTTPS 传输，`git ls-remote` 能列出真实仓库的 commit：
+
+```
+git ls-remote https://gh-proxy.com/https://github.com/aeroheaven1/AutoClicker.git
+→ d7867b7c14be7384ff5b3e728c9856c254515a4a  HEAD
+→ d7867b7c14be7384ff5b3e728c9856c254515a4a  refs/heads/main
+```
+
+但它**只承担读取**（推送时连真 token 和假 token 报错一样），所以不能作为推送方案，只能当"HTTPS 读不了时的手动兜底"。
+
+### 所以推送只有 SSH 一条路
+
+公钥已生成、SSH 配置已就绪（22 端口优先，自动回退 ssh.github.com:443），只差把公钥粘到 GitHub。
 
 ---
 

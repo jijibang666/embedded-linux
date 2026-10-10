@@ -55,6 +55,26 @@ CMake 项目光靠扩展自己猜头文件路径会漏，要在 `CMakeLists.txt`
 
 `bin/cpptools` 的 ELF 解释器是 `./libc.so`（相对路径），所以必须在 `bin/` 目录里、或者用相对路径调用它；从别的目录用绝对路径直接跑会报 `No such file or directory`。这是正常现象，不是装坏了。
 
+## 怎么确认 IntelliSense 真的在工作
+
+`intellisense-check.c` 里故意留了 3 个错：
+
+| 行号 | 代码 | 应该出现的提示 |
+| --- | --- | --- |
+| 17 | `undefined_function(x);` | 隐式声明 / 找不到符号 |
+| 18 | `int z = x + "字符串";` | 指针与整数相加，类型不匹配 |
+| 20 | `not_declared` | 未声明的标识符 |
+
+在 VS Code 里打开这个文件，编辑器里应该看到 3 处红色波浪线；同时「问题」面板（Ctrl+Shift+M）会列出这 3 条。
+一条命令同时确认三件事（编译器报错 + `compile_commands.json` 在 + cpptools 是 ELF）：
+
+```bash
+# VS Code 里：Ctrl+Shift+P → Tasks: Run Task → 8-自检 IntelliSense（故意报 3 个错）
+```
+
+如果波浪线没出现，按顺序检查：① 扩展是不是装在 WSL 侧（`ls ~/.vscode-server/extensions/ | grep cpptools`）；
+② `build/compile_commands.json` 在不在；③ `settings.json` 里有没有 `C_Cpp.default.compileCommands`。
+
 ## 推送到 GitHub（SSH，不用 HTTPS）
 
 这台机器到 `github.com:443` 的 HTTPS 链路不稳定，所以走 SSH（配了 22 端口，不通会自动回退到 `ssh.github.com:443`）。
