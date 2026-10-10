@@ -1,0 +1,23 @@
+# 编译产物（源码进仓库，二进制不进）
+hello
+hello_arm
+*.o
+*.obj
+*.elf
+*.bin
+*.hex
+*.map
+
+# 构建目录
+build/
+out/
+
+# 编辑器与系统杂物
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/extensions.json
+*.swp
+*~
+.DS_Store
