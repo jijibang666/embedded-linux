@@ -1,0 +1,56 @@
+{
+  // 这份设置放在 ~/work/.vscode/ 下，work 下面所有子目录（w01、w02、各项目）都继承。
+  // 打开方式：code /home/yingying/work
+
+  // ---------- 编辑器 ----------
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.rulers": [100],
+  "editor.formatOnSave": false,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.encoding": "utf8",
+  // Linux 下换行就是 LF，别让编辑器给你改成 CRLF（交叉编译/脚本会踩坑）
+  "files.eol": "\n",
+
+  // ---------- 文件树：别让 build/ 和编译产物刷屏 ----------
+  "files.exclude": {
+    "**/.git": true,
+    "**/build": false
+  },
+  "search.exclude": {
+    "**/build": true,
+    "**/.vscode-server": true
+  },
+  "files.associations": {
+    "*.dts": "dts",
+    "*.dtsi": "dts",
+    "*.overlay": "dts",
+    "Makefile": "makefile",
+    "*.mk": "makefile"
+  },
+
+  // ---------- C/C++ 智能提示 ----------
+  "C_Cpp.default.cStandard": "c17",
+  "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+  "C_Cpp.default.compilerPath": "/usr/bin/gcc",
+  "C_Cpp.default.includePath": [
+    "${workspaceFolder}/**",
+    "/usr/include",
+    "/usr/local/include"
+  ],
+  "C_Cpp.errorSquiggles": "enabled",
+  "C_Cpp.intelliSenseEngine": "default",
+  // 交叉编译时切换 IntelliSense 到 ARM 头文件（需要时把上一行 compilerPath 改成
+  // arm-linux-gnueabihf-gcc，并把下面这行打开）
+  // "C_Cpp.default.compilerPath": "/usr/bin/arm-linux-gnueabihf-gcc",
+
+  // ---------- 终端 ----------
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.scrollback": 10000,
+
+  // ---------- 远程 / WSL 提示 ----------
+  "remote.WSL.fileWatcher.polling": false,
+  "extensions.autoUpdate": true
+}

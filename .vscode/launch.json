@@ -1,0 +1,58 @@
+{
+  // 按 F5 选调试配置：
+  //   「调试当前 C 文件（gcc + gdb）」  —— 最常见的日常用法，自动编译再调试
+  //   「调试 ARM 程序（QEMU + gdb）」   —— 交叉编译后用 QEMU 模拟执行并调试
+  // 前提：VS Code 已连接到 WSL（左下角显示「WSL: Ubuntu-22.04」），并且 C/C++ 扩展
+  //       是装在 Linux 侧的（第一次会提示「在 WSL 中安装」，点它就对了）。
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "调试当前 C 文件（gcc + gdb）",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${fileDirname}/${fileBasenameNoExtension}",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${fileDirname}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "preLaunchTask": "0-原生编译并运行（当前文件）",
+      "setupCommands": [
+        {
+          "description": "为 gdb 启用整齐打印（结构体、STL 容器显示得更易读）",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "让 gdb 用 Intel 风格反汇编（跟教材/手册一致）",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ]
+    },
+    {
+      "name": "调试 ARM 程序（QEMU + gdb）",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${fileDirname}/${fileBasenameNoExtension}_arm",
+      "args": [],
+      "stopAtEntry": true,
+      "cwd": "${fileDirname}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb-multiarch",
+      "miDebuggerServerAddress": "localhost:1234",
+      "preLaunchTask": "6-QEMU 开 gdb 服务端（ARM，端口 1234）",
+      "setupCommands": [
+        {
+          "description": "为 gdb 启用整齐打印",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}

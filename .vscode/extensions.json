@@ -1,0 +1,14 @@
+{
+  // 打开这个工作区时，VS Code 会提示安装这些扩展。
+  // 注意：在 WSL 窗口里装扩展时，一定要选「在 WSL: Ubuntu-22.04 中安装」，
+  //       装到 Windows 侧对 Linux 侧的编译/调试没用。
+  "recommendations": [
+    "ms-vscode.cpptools",
+    "ms-vscode.cpptools-extension-pack",
+    "ms-vscode.cmake-tools",
+    "twxs.cmake",
+    "ms-vscode.makefile-tools",
+    "ms-vscode-remote.remote-wsl",
+    "marus25.cortex-debug"
+  ]
+}
