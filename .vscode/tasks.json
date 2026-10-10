@@ -311,7 +311,7 @@
       "detail": "QEMU 会在 1234 端口等 gdb 连上来再开始执行；配合 VS Code 的「调试 ARM 程序（QEMU + gdb）」用"
     },
     {
-      "label": "9-一键验收全部 38 项（w01-preflight.sh）",
+      "label": "9-一键验收全部 41 项（w01-preflight.sh）",
       "type": "shell",
       "command": "bash",
       "args": [
@@ -326,7 +326,7 @@
         "panel": "dedicated",
         "clear": true
       },
-      "detail": "38 项实测：WSL / 工具链 / 编译 / 调试 / VS Code / Git 与推送通道。全绿才算这一周过。"
+      "detail": "41 项实测：WSL / 工具链 / 编译 / 调试 / VS Code / Git 与推送通道。全绿才算这一周过。"
     },
     {
       "label": "10-看 GitHub 上的仓库",
